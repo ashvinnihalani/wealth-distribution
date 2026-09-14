@@ -8,7 +8,16 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header class="hero">
+<nav class="nav" aria-label="Sections">
+  <a class="brand" href="#overview" data-nav="overview">Wealth Distribution</a>
+  <ul>
+    <li><a href="#overview" data-nav="overview">Overview</a></li>
+    <li><a href="#distribution" data-nav="distribution">Percentile Distribution</a></li>
+    <li><a href="#top-bucket" data-nav="top-bucket">Top Bucket</a></li>
+    <li><a href="#composition" data-nav="composition">Composition</a></li>
+  </ul>
+</nav>
+<header class="hero" id="overview">
   <p class="eyebrow">U.S. household wealth, 1989 – 2026 · Federal Reserve data</p>
   <h1>Wealth Distribution</h1>
   <p class="tagline">The chart looks the same. The top does not.</p>
@@ -48,7 +57,7 @@
 
 <section class="tiles" id="tiles" aria-live="polite"></section>
 
-<section class="card">
+<section class="card" id="distribution">
   <div class="card-head">
     <div>
       <h2 id="dist-title">Line up every household by wealth</h2>
@@ -68,7 +77,7 @@
   <div class="table-wrap" id="dist-table" hidden></div>
 </section>
 
-<section class="card">
+<section class="card" id="top-bucket">
   <div class="card-head">
     <div>
       <h2>Has the top bucket's slice grown?</h2>
@@ -79,7 +88,7 @@
   <p class="note" id="share-note"></p>
 </section>
 
-<section class="card">
+<section class="card" id="composition">
   <div class="card-head">
     <div>
       <h2 id="mix-title">What each group's wealth is made of</h2>

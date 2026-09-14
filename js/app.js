@@ -532,6 +532,39 @@
     document.querySelectorAll('[data-set-t]').forEach(b => b.addEventListener('click', () => setState({ t: +b.dataset.setT })));
     let raf = null;
     window.addEventListener('resize', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); });
+    wireNav();
+  }
+
+  // ---------- nav ----------
+  function wireNav() {
+    const links = [...document.querySelectorAll('.nav a[data-nav]')];
+    const sections = ['overview', 'distribution', 'top-bucket', 'composition'].map(id => $(id));
+    const controls = document.querySelector('.controls');
+    const setControlsH = () => {
+      const h = window.innerWidth <= 640 ? 0 : controls.offsetHeight;
+      document.documentElement.style.setProperty('--controls-h', h + 'px');
+    };
+    setControlsH();
+    window.addEventListener('resize', setControlsH);
+    // scroll via JS so the state hash (#n=…&q=…) is left intact
+    links.forEach(a => a.addEventListener('click', ev => {
+      ev.preventDefault();
+      $(a.dataset.nav).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+    const setActive = id => links.forEach(a => {
+      if (a.classList.contains('brand')) return;
+      if (a.dataset.nav === id) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+    });
+    const update = () => {
+      const line = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) +
+        parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--controls-h')) + 40;
+      let current = sections[0];
+      for (const s of sections) if (s.getBoundingClientRect().top <= line) current = s;
+      if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) current = sections[sections.length - 1];
+      setActive(current.id);
+    };
+    window.addEventListener('scroll', update, { passive: true });
+    update();
   }
 
   fetch('data/dfa.json').then(r => r.json()).then(d => {

@@ -19,6 +19,8 @@
   --tier-5: #104281;
   --line-muted: #b7b5ad;
   --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.05);
+  --nav-h: 48px;
+  --controls-h: 0px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -47,9 +49,10 @@
 
 * { box-sizing: border-box; }
 html { font-size: 16px; }
+html { scroll-behavior: smooth; }
 body {
   margin: 0;
-  padding-block: 0 64px;
+  padding-block: var(--nav-h) 64px;
   padding-inline: clamp(16px, 4vw, 40px);
   background: var(--page);
   color: var(--ink);
@@ -62,6 +65,23 @@ h1 { font-size: clamp(1.9rem, 4.5vw, 3rem); max-width: 22ch; }
 h2 { font-size: 1.15rem; font-weight: 650; }
 p { margin: 0; }
 .small { font-size: 0.85rem; color: var(--ink-2); }
+
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--nav-h); z-index: 10;
+  display: flex; align-items: center; gap: 24px;
+  padding-inline: clamp(16px, 4vw, 40px);
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.nav .brand { font-weight: 700; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; overflow-x: auto; }
+.nav li a {
+  display: block; padding: 6px 10px; border-radius: 8px; font-size: 0.9rem; white-space: nowrap;
+  color: var(--ink-2); text-decoration: none;
+}
+.nav li a:hover { background: var(--page); color: var(--ink); }
+.nav li a[aria-current="true"] { background: var(--accent-soft); color: var(--ink); font-weight: 600; }
+.card, .hero { scroll-margin-top: calc(var(--nav-h) + var(--controls-h) + 12px); }
+.hero { scroll-margin-top: var(--nav-h); }
 
 .hero { max-width: 900px; margin: 0 auto; padding-block: 48px 24px; display: grid; gap: 14px; }
 .eyebrow { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
@@ -78,7 +98,7 @@ p { margin: 0; }
   display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
   padding: 18px 20px; box-shadow: var(--shadow);
-  position: sticky; top: 0; z-index: 5;
+  position: sticky; top: var(--nav-h); z-index: 5;
 }
 .control { display: grid; gap: 6px; align-content: start; }
 .control > label { font-weight: 600; font-size: 0.9rem; }
@@ -169,6 +189,8 @@ th { color: var(--muted); font-weight: 600; }
 .tooltip .m { color: var(--muted); }
 
 @media (max-width: 640px) {
+  .nav { gap: 12px; }
+  .nav .brand { display: none; }
   .controls { position: static; }
   .tile .v { font-size: 1.4rem; }
 }
