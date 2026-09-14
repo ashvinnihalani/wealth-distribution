@@ -82,10 +82,10 @@
 
   // ---------- state ----------
   let D = null; // data
-  const PAGES = ['overview', 'distribution', 'top-bucket', 'composition'];
-  const PAGE_TITLES = { overview: 'Overview', distribution: 'Percentile Distribution', 'top-bucket': 'Top Bucket', composition: 'Composition' };
+  const PAGES = ['overview', 'distribution', 'top-bucket', 'composition', 'faq'];
+  const PAGE_TITLES = { overview: 'Overview', distribution: 'Percentile Distribution', 'top-bucket': 'Top Bucket', composition: 'Composition', faq: 'FAQ' };
   // each page has its own independent controls and settings
-  const PAGE_CONTROLS = { overview: ['n', 't', 'q'], distribution: ['n', 't', 'q'], 'top-bucket': ['n', 't', 'q'], composition: ['q'] };
+  const PAGE_CONTROLS = { overview: ['n', 't', 'q'], distribution: ['n', 't', 'q'], 'top-bucket': ['n', 't', 'q'], composition: ['q'], faq: [] };
   const states = {};
   let page = 'overview';
   let state = null;      // alias for states[page]
@@ -172,6 +172,7 @@
     const last = D.quarters.length - 1, base = qLabel(last);
     for (const pg of PAGES) {
       const box = document.querySelector(`[data-controls][data-page="${pg}"]`);
+      if (!box) continue;
       const has = PAGE_CONTROLS[pg];
       let h = '';
       if (has.includes('n')) h += `<div class="control">
@@ -538,7 +539,7 @@
       const B = buckets(state.q, state.t, state.debt, BUCKET_OPTIONS[state.n]);
       if (page === 'overview') renderTiles(B); else renderDist(B);
     } else if (page === 'top-bucket') renderShare();
-    else renderMix();
+    else if (page === 'composition') renderMix();
     writeHash();
   }
   function setPageState(pg, patch) {
@@ -555,6 +556,7 @@
     render();
   }
   function hashString() {
+    if (PAGE_CONTROLS[page].length === 0) return page;
     const s = states[page];
     return `${page}?n=${BUCKET_OPTIONS[s.n]}&t=${s.t}&d=${s.debt ? 1 : 0}&q=${D.quarters[s.q]}&r=${s.real ? 1 : 0}&y=${states.distribution.y}`;
   }

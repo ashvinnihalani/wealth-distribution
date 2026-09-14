@@ -15,6 +15,7 @@
     <li><a href="#distribution" data-nav="distribution">Percentile Distribution</a></li>
     <li><a href="#top-bucket" data-nav="top-bucket">Top Bucket</a></li>
     <li><a href="#composition" data-nav="composition">Composition</a></li>
+    <li><a href="#faq" data-nav="faq">FAQ</a></li>
   </ul>
 </nav>
 <header class="hero page" data-page="overview">
@@ -79,12 +80,24 @@
   <div class="chart" id="chart-mix"></div>
 </section>
 
-<section class="prose page" data-page="overview">
-  <h2>How this is built</h2>
-  <p>Group totals come straight from the Federal Reserve's <a href="https://www.federalreserve.gov/releases/z1/dataviz/dfa/distribute/table/">Distributional Financial Accounts</a>, which report every quarter since 1989 the assets, debts and household counts of five wealth groups: the bottom 50%, the 50th–90th percentiles, the 90th–99th, the 99th–99.9th, and the top 0.1%. Every dollar figure on this page reconciles to those published totals.</p>
-  <p><strong>Buckets.</strong> The Fed only publishes five groups, so slicing finer needs an assumption about how wealth is spread <em>inside</em> each group. Below the 99th percentile the shape comes from the Survey of Consumer Finances net-worth percentiles (2022 survey, as tabulated by <a href="https://dqydj.com/net-worth-percentiles/">DQYDJ</a>). Above it, a Pareto curve is used. Splitting the top 0.1% into the top 0.01% and 0.001% uses the <a href="https://wid.world/country/usa/">World Inequality Database</a>'s reported split, held constant over time, so the time trend for those two finest slices is the Fed's top-0.1% trend. This is the same approach as the <em>Inequality in America</em> companion document that inspired the page.</p>
-  <p><strong>Liquidity.</strong> The slider adds asset classes in order of how quickly they turn into spendable cash: deposits and money-market funds; then stocks, mutual funds and bonds; then retirement accounts, pensions, life insurance and annuities; then private business equity and other assets; then homes and consumer durables. "Subtract debts" takes off mortgages, consumer credit and other liabilities. Within each group, debts are spread so that assets minus debts follows the survey's net-worth shape, which is what keeps the poorest households underwater. Note that with only cash counted, the country's households as a whole owe more than they hold, so wealth shares are undefined and the chart shows dollars only.</p>
-  <p><strong>Dollars.</strong> Nominal by default in the Fed's data; the inflation toggle uses CPI-U (FRED series CPIAUCSL) to restate every quarter in the latest quarter's dollars. Averages are per household. "Screens of cash" uses the video's scale: one bill is $50,000, a screen-high stack is 100 bills, or $5 million.</p>
+<section class="prose page" data-page="faq">
+  <h2>FAQ</h2>
+  <h3>Where does the data come from?</h3>
+  <p>Group totals come straight from the Federal Reserve's <a href="https://www.federalreserve.gov/releases/z1/dataviz/dfa/distribute/table/">Distributional Financial Accounts</a>, which report every quarter since 1989 the assets, debts and household counts of five wealth groups: the bottom 50%, the 50th–90th percentiles, the 90th–99th, the 99th–99.9th, and the top 0.1%. Every dollar figure on this site reconciles to those published totals.</p>
+  <h3>The Fed only publishes five groups. How can the site show 100,000 buckets?</h3>
+  <p>Slicing finer needs an assumption about how wealth is spread <em>inside</em> each group. Below the 99th percentile the shape comes from the Survey of Consumer Finances net-worth percentiles (2022 survey, as tabulated by <a href="https://dqydj.com/net-worth-percentiles/">DQYDJ</a>). Above it, a Pareto curve is used. Splitting the top 0.1% into the top 0.01% and 0.001% uses the <a href="https://wid.world/country/usa/">World Inequality Database</a>'s reported split, held constant over time, so the time trend for those two finest slices is the Fed's top-0.1% trend. This is the same approach as the <em>Inequality in America</em> companion document that inspired the site.</p>
+  <h3>What does the "what counts as wealth" slider do?</h3>
+  <p>It adds asset classes in order of how quickly they turn into spendable cash: deposits and money-market funds; then stocks, mutual funds and bonds; then retirement accounts, pensions, life insurance and annuities; then private business equity and other assets; then homes and consumer durables. "Subtract debts" takes off mortgages, consumer credit and other liabilities.</p>
+  <h3>How are debts split up within a group?</h3>
+  <p>Within each group, debts are spread so that assets minus debts follows the survey's net-worth shape, which is what keeps the poorest households underwater. The bottom few percent of households show negative net worth, as they do in the survey.</p>
+  <h3>Why does a share sometimes show as undefined?</h3>
+  <p>With only cash counted and debts subtracted, the country's households as a whole owe more than they hold, so a "share of the total" has no meaning. The charts then show dollars only.</p>
+  <h3>Are the dollars inflation-adjusted?</h3>
+  <p>The Fed's data is nominal. The inflation toggle uses CPI-U (FRED series CPIAUCSL) to restate every quarter in the latest quarter's dollars. Averages are per household.</p>
+  <h3>What is "screens of cash"?</h3>
+  <p>It uses the scale from the <em>Wealth Inequality in America</em> video: one bill is $50,000, a screen-high stack is 100 bills, or $5 million. The number tells you how many screens tall the top bucket's pile would be.</p>
+  <h3>Why do the sliders differ between pages?</h3>
+  <p>Each page keeps its own settings, so you can compare, say, 5 buckets in 1989 on one page with 1,000 buckets today on another. The Composition page only needs a year, because it always shows every asset tier.</p>
   <p class="small">Data: Federal Reserve Board Z.1 DFA release; FRED CPIAUCSL; Survey of Consumer Finances via DQYDJ; World Inequality Database. Inspired by Politizane's <em>Wealth Inequality in America</em> (2012) and the 2026 companion document. Source on <a href="https://github.com/ashvinnihalani/wealth-distribution">GitHub</a>.</p>
 </section>
 

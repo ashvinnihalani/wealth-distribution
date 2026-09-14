@@ -175,6 +175,7 @@ th { color: var(--muted); font-weight: 600; }
 
 .prose { max-width: 900px; margin: 40px auto 0; display: grid; gap: 12px; color: var(--ink-2); font-size: 0.95rem; }
 .prose h2 { color: var(--ink); }
+.prose h3 { color: var(--ink); font-size: 1rem; font-weight: 650; margin: 12px 0 -4px; }
 
 .tooltip {
   position: fixed; z-index: 20; pointer-events: none;
