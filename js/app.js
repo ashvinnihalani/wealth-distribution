@@ -23,7 +23,6 @@
   const BETA = 0.7;           // Pareto shape inside the top 1%
   const WID_TOP01_IN_TOP1 = 0.527173913;   // top 0.01% share of the top 0.1%'s wealth (WID, USA 2024)
   const WID_TOP001_IN_TOP01 = 0.5257731959; // top 0.001% share of the top 0.01%'s wealth
-  const BILL = 50000, SCREEN = 100 * BILL;  // the video's scale: $5M stack = one screen
 
   // group intervals in population rank
   const G = [[0, 0.5], [0.5, 0.9], [0.9, 0.99], [0.99, 0.999], [0.999, 1]];
@@ -258,7 +257,6 @@
     const shareOK = tot > 0;
     const topShare = shareOK && top.value >= 0 ? top.value / tot : null;
     const botShare = shareOK ? bottomHalf / tot : null;
-    const screens = top.avg * k / SCREEN;
     const first = topShareSeries(t, debt, N)[0];
     const tiles = [
       { k: `${bucketName(N)} bucket, per household`, v: fmtMoney(top.avg * k), neg: top.avg < 0,
@@ -267,8 +265,6 @@
         d: topShare == null ? 'undefined: the total is negative' : first != null ? `was ${fmtPct(first)} in 1989 Q3` : '' },
       { k: 'Bottom half share', v: botShare == null ? '—' : fmtPct(botShare, 2), neg: botShare != null && botShare < 0,
         d: botShare == null ? 'undefined: the total is negative' : `${fmtMoney(bottomHalf * 1e6 * k)} across ${fmtInt(totalHouseholds(q) / 2)} households` },
-      { k: 'Screens of cash', v: screens >= 0 ? (screens < 10 ? screens.toFixed(1) : fmtInt(screens)) : '—',
-        d: 'at the video\'s scale, a screen-high stack is $5M' },
       { k: 'Total pool', v: fmtMoney(tot * 1e6 * k), neg: tot < 0,
         d: `${state.real ? 'in ' + qLabel(D.quarters.length - 1) + ' dollars' : 'nominal'} · ${fmtMoney(tot * 1e6 * k / totalHouseholds(q))} per household` },
     ];
