@@ -84,8 +84,12 @@
   let D = null; // data
   const PAGES = ['overview', 'distribution', 'top-bucket', 'composition'];
   const PAGE_TITLES = { overview: 'Overview', distribution: 'Percentile Distribution', 'top-bucket': 'Top Bucket', composition: 'Composition' };
-  const state = { page: 'overview', n: 3, t: 4, debt: true, q: 146, real: true, y: 'fit99', table: false };
-  let playing = null;
+  // each page has its own independent controls and settings
+  const PAGE_CONTROLS = { overview: ['n', 't', 'q'], distribution: ['n', 't', 'q'], 'top-bucket': ['n', 't', 'q'], composition: ['q'] };
+  const states = {};
+  let page = 'overview';
+  let state = null;      // alias for states[page]
+  let playing = null;    // { page, timer }
 
   // ---------- helpers ----------
   const $ = id => document.getElementById(id);
@@ -162,16 +166,57 @@
     });
   }
 
-  // ---------- readouts ----------
+  // ---------- controls (one set per page) ----------
+  const el = name => document.getElementById(`${name}-${page}`);
+  function buildControls() {
+    const last = D.quarters.length - 1, base = qLabel(last);
+    for (const pg of PAGES) {
+      const box = document.querySelector(`[data-controls][data-page="${pg}"]`);
+      const has = PAGE_CONTROLS[pg];
+      let h = '';
+      if (has.includes('n')) h += `<div class="control">
+        <label for="n-slider-${pg}">How many buckets</label>
+        <input id="n-slider-${pg}" type="range" min="0" max="6" step="1" value="3">
+        <div class="readout" id="n-readout-${pg}"></div></div>`;
+      if (has.includes('t')) h += `<div class="control">
+        <label for="t-slider-${pg}">What counts as wealth</label>
+        <input id="t-slider-${pg}" type="range" min="0" max="4" step="1" value="4">
+        <div class="readout" id="t-readout-${pg}"></div>
+        <label class="check"><input id="debt-check-${pg}" type="checkbox" checked> Subtract debts</label></div>`;
+      if (has.includes('q')) h += `<div class="control">
+        <label for="q-slider-${pg}">${pg === 'top-bucket' ? 'Highlight a year' : 'What year it is'}</label>
+        <div class="row"><input id="q-slider-${pg}" type="range" min="0" max="${last}" step="1" value="${last}">
+        <button id="play-${pg}" class="btn" type="button" aria-label="Play through time">▶</button></div>
+        <div class="readout" id="q-readout-${pg}"></div>
+        <label class="check"><input id="real-check-${pg}" type="checkbox" checked> Inflation-adjust to ${base} dollars</label></div>`;
+      box.innerHTML = h;
+      const st = states[pg];
+      const on = (id, ev, fn) => { const x = document.getElementById(`${id}-${pg}`); if (x) x.addEventListener(ev, fn); };
+      on('n-slider', 'input', e => setPageState(pg, { n: +e.target.value }));
+      on('t-slider', 'input', e => setPageState(pg, { t: +e.target.value }));
+      on('q-slider', 'input', e => setPageState(pg, { q: +e.target.value }));
+      on('debt-check', 'change', e => setPageState(pg, { debt: e.target.checked }));
+      on('real-check', 'change', e => setPageState(pg, { real: e.target.checked }));
+      on('play', 'click', () => togglePlay(pg));
+      void st;
+    }
+  }
+  function syncControls() {
+    const set = (name, prop, v) => { const x = el(name); if (x) x[prop] = v; };
+    set('n-slider', 'value', state.n); set('t-slider', 'value', state.t); set('q-slider', 'value', state.q);
+    set('debt-check', 'checked', state.debt); set('real-check', 'checked', state.real);
+    $('y-mode').value = states.distribution.y;
+  }
   function updateReadouts() {
     const N = BUCKET_OPTIONS[state.n];
     const hh = totalHouseholds(state.q);
-    $('n-readout').innerHTML = `<b>${fmtInt(N)}</b> buckets · each is ${fmtPct(1 / N, N >= 1000 ? 3 : 0)} of households (≈${fmtInt(hh / N)} households)`;
-    const tierNames = D.tiers.map(x => x.label);
-    let tl = state.t === 0 ? 'Cash & deposits only' : state.t === 4 ? 'Everything: all assets' : 'Cash + ' + tierNames.slice(1, state.t + 1).map(s => s.toLowerCase()).join(' + ');
-    $('t-readout').innerHTML = `<b>${esc(tl)}</b>${state.debt ? ' minus debts' : ''}`;
-    $('q-readout').innerHTML = `<b>${qLabel(state.q)}</b> · ${fmtInt(hh)} households`;
-    $('base-quarter').textContent = qLabel(D.quarters.length - 1);
+    if (el('n-readout')) el('n-readout').innerHTML = `<b>${fmtInt(N)}</b> buckets · each is ${fmtPct(1 / N, N >= 1000 ? 3 : 0)} of households (≈${fmtInt(hh / N)} households)`;
+    if (el('t-readout')) {
+      const tierNames = D.tiers.map(x => x.label);
+      const tl = state.t === 0 ? 'Cash & deposits only' : state.t === 4 ? 'Everything: all assets' : 'Cash + ' + tierNames.slice(1, state.t + 1).map(s => s.toLowerCase()).join(' + ');
+      el('t-readout').innerHTML = `<b>${esc(tl)}</b>${state.debt ? ' minus debts' : ''}`;
+    }
+    if (el('q-readout')) el('q-readout').innerHTML = `<b>${qLabel(state.q)}</b> · ${fmtInt(hh)} households`;
   }
 
   // ---------- tiles ----------
@@ -477,104 +522,107 @@
 
   // ---------- orchestration ----------
   function showPage() {
-    document.querySelectorAll('.page').forEach(el => { el.hidden = el.dataset.page !== state.page; });
+    document.querySelectorAll('.page').forEach(x => { x.hidden = x.dataset.page !== page; });
     document.querySelectorAll('.nav a[data-nav]').forEach(a => {
       if (a.classList.contains('brand')) return;
-      if (a.dataset.nav === state.page) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      if (a.dataset.nav === page) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
-    document.title = state.page === 'overview' ? 'Wealth Distribution' : `${PAGE_TITLES[state.page]} · Wealth Distribution`;
+    document.title = page === 'overview' ? 'Wealth Distribution' : `${PAGE_TITLES[page]} · Wealth Distribution`;
   }
   function render() {
+    state = states[page];
     showPage();
+    syncControls();
     updateReadouts();
-    if (state.page === 'overview' || state.page === 'distribution') {
+    if (page === 'overview' || page === 'distribution') {
       const B = buckets(state.q, state.t, state.debt, BUCKET_OPTIONS[state.n]);
-      if (state.page === 'overview') renderTiles(B); else renderDist(B);
-    } else if (state.page === 'top-bucket') renderShare();
+      if (page === 'overview') renderTiles(B); else renderDist(B);
+    } else if (page === 'top-bucket') renderShare();
     else renderMix();
     writeHash();
   }
-  function goToPage(page, push) {
-    if (!PAGES.includes(page)) page = 'overview';
-    state.page = page;
+  function setPageState(pg, patch) {
+    Object.assign(states[pg], patch);
+    if (pg === page) render();
+  }
+  function setState(patch) { setPageState(page, patch); }
+  function goToPage(pg, push) {
+    if (!PAGES.includes(pg)) pg = 'overview';
+    if (playing) togglePlay(playing.page);
+    page = pg; state = states[page];
     if (push) history.pushState(null, '', '#' + hashString());
     window.scrollTo({ top: 0 });
-    setState({});
-  }
-  function setState(patch) {
-    Object.assign(state, patch);
-    $('n-slider').value = state.n; $('t-slider').value = state.t; $('q-slider').value = state.q;
-    $('debt-check').checked = state.debt; $('real-check').checked = state.real; $('y-mode').value = state.y;
     render();
   }
   function hashString() {
-    return `${state.page}?n=${BUCKET_OPTIONS[state.n]}&t=${state.t}&d=${state.debt ? 1 : 0}&q=${D.quarters[state.q]}&r=${state.real ? 1 : 0}&y=${state.y}`;
+    const s = states[page];
+    return `${page}?n=${BUCKET_OPTIONS[s.n]}&t=${s.t}&d=${s.debt ? 1 : 0}&q=${D.quarters[s.q]}&r=${s.real ? 1 : 0}&y=${states.distribution.y}`;
   }
   function writeHash() { history.replaceState(null, '', '#' + hashString()); }
   function readHash() {
     const raw = location.hash.slice(1);
     const qi = raw.indexOf('?');
-    let page = qi >= 0 ? raw.slice(0, qi) : raw, params = qi >= 0 ? raw.slice(qi + 1) : '';
-    if (page.includes('=')) { params = page; page = 'overview'; } // legacy hash with state only
-    state.page = PAGES.includes(page) ? page : 'overview';
+    let pg = qi >= 0 ? raw.slice(0, qi) : raw, params = qi >= 0 ? raw.slice(qi + 1) : '';
+    if (pg.includes('=')) { params = pg; pg = 'overview'; } // legacy hash with state only
+    page = PAGES.includes(pg) ? pg : 'overview';
+    const s = states[page];
     const p = new URLSearchParams(params);
-    if (p.has('n')) { const i = BUCKET_OPTIONS.indexOf(+p.get('n')); if (i >= 0) state.n = i; }
-    if (p.has('t')) state.t = Math.max(0, Math.min(4, +p.get('t') | 0));
-    if (p.has('d')) state.debt = p.get('d') === '1';
-    if (p.has('q')) { const i = D.quarters.indexOf(p.get('q')); if (i >= 0) state.q = i; }
-    if (p.has('r')) state.real = p.get('r') === '1';
-    if (p.has('y') && ['fit99', 'all', 'log'].includes(p.get('y'))) state.y = p.get('y');
+    if (p.has('n')) { const i = BUCKET_OPTIONS.indexOf(+p.get('n')); if (i >= 0) s.n = i; }
+    if (p.has('t')) s.t = Math.max(0, Math.min(4, +p.get('t') | 0));
+    if (p.has('d')) s.debt = p.get('d') === '1';
+    if (p.has('q')) { const i = D.quarters.indexOf(p.get('q')); if (i >= 0) s.q = i; }
+    if (p.has('r')) s.real = p.get('r') === '1';
+    if (p.has('y') && ['fit99', 'all', 'log'].includes(p.get('y'))) states.distribution.y = p.get('y');
   }
-  function togglePlay() {
-    const btn = $('play');
-    if (playing) { clearInterval(playing); playing = null; btn.textContent = '▶'; btn.setAttribute('aria-pressed', 'false'); return; }
-    if (state.q >= D.quarters.length - 1) state.q = 0;
+  function togglePlay(pg) {
+    const btn = document.getElementById(`play-${pg}`);
+    if (playing) {
+      clearInterval(playing.timer);
+      const b = document.getElementById(`play-${playing.page}`);
+      b.textContent = '▶'; b.setAttribute('aria-pressed', 'false');
+      const was = playing.page; playing = null;
+      if (was === pg) return;
+    }
+    const st = states[pg];
+    if (st.q >= D.quarters.length - 1) st.q = 0;
     btn.textContent = '❚❚'; btn.setAttribute('aria-pressed', 'true');
-    playing = setInterval(() => {
-      if (state.q >= D.quarters.length - 1) { togglePlay(); return; }
-      setState({ q: state.q + 1 });
-    }, 120);
+    playing = { page: pg, timer: setInterval(() => {
+      if (st.q >= D.quarters.length - 1) { togglePlay(pg); return; }
+      setPageState(pg, { q: st.q + 1 });
+    }, 120) };
   }
 
   function wire() {
-    $('n-slider').addEventListener('input', e => setState({ n: +e.target.value }));
-    $('t-slider').addEventListener('input', e => setState({ t: +e.target.value }));
-    $('q-slider').addEventListener('input', e => setState({ q: +e.target.value }));
-    $('debt-check').addEventListener('change', e => setState({ debt: e.target.checked }));
-    $('real-check').addEventListener('change', e => setState({ real: e.target.checked }));
-    $('y-mode').addEventListener('change', e => setState({ y: e.target.value }));
-    $('play').addEventListener('click', togglePlay);
+    buildControls();
+    $('y-mode').addEventListener('change', e => setPageState('distribution', { y: e.target.value }));
     $('table-toggle').addEventListener('click', () => {
-      state.table = !state.table;
-      const wrap = $('dist-table'); wrap.hidden = !state.table;
-      $('table-toggle').setAttribute('aria-expanded', String(state.table));
-      $('table-toggle').setAttribute('aria-pressed', String(state.table));
-      render();
+      const s = states.distribution;
+      s.table = !s.table;
+      $('dist-table').hidden = !s.table;
+      $('table-toggle').setAttribute('aria-expanded', String(s.table));
+      $('table-toggle').setAttribute('aria-pressed', String(s.table));
+      if (page === 'distribution') render();
     });
-    document.querySelectorAll('[data-set-n]').forEach(b => b.addEventListener('click', () => { state.n = BUCKET_OPTIONS.indexOf(+b.dataset.setN); goToPage('distribution', true); }));
-    document.querySelectorAll('[data-set-t]').forEach(b => b.addEventListener('click', () => { state.t = +b.dataset.setT; goToPage('distribution', true); }));
+    document.querySelectorAll('[data-set-n]').forEach(b => b.addEventListener('click', () => { states.distribution.n = BUCKET_OPTIONS.indexOf(+b.dataset.setN); goToPage('distribution', true); }));
+    document.querySelectorAll('[data-set-t]').forEach(b => b.addEventListener('click', () => { states.distribution.t = +b.dataset.setT; goToPage('distribution', true); }));
     let raf = null;
     window.addEventListener('resize', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); });
-    wireNav();
-  }
-
-  // ---------- nav / routing ----------
-  function wireNav() {
     document.querySelectorAll('.nav a[data-nav]').forEach(a => a.addEventListener('click', ev => {
       ev.preventDefault();
-      if (a.dataset.nav !== state.page) goToPage(a.dataset.nav, true);
+      if (a.dataset.nav !== page) goToPage(a.dataset.nav, true);
       else window.scrollTo({ top: 0, behavior: 'smooth' });
     }));
-    window.addEventListener('popstate', () => { readHash(); goToPage(state.page, false); });
+    window.addEventListener('popstate', () => { readHash(); goToPage(page, false); });
   }
 
   fetch('data/dfa.json').then(r => r.json()).then(d => {
     D = d;
-    $('q-slider').max = D.quarters.length - 1;
-    state.q = D.quarters.length - 1;
+    const last = D.quarters.length - 1;
+    for (const pg of PAGES) states[pg] = { n: 4, t: 4, debt: true, q: last, real: true, y: 'fit99', table: false };
+    state = states[page];
     readHash();
     wire();
-    setState({});
+    goToPage(page, false);
   }).catch(err => {
     $('tiles').innerHTML = `<div class="tile"><div class="k">Could not load data</div><div class="d">${esc(err.message)}</div></div>`;
   });

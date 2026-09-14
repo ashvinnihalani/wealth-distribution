@@ -26,37 +26,15 @@
     Split it into a thousand, or a hundred thousand, and the richest bucket keeps pulling away.
     Then ask what that wealth actually <em>is</em>: cash in the bank, or a stock portfolio and a house.
   </p>
-  <p class="tryit"><strong>Try this:</strong> set buckets to <button class="linkbtn" data-set-n="5">5</button> and drag the year from 1989 to today: the top bar hardly changes shape.
-    Now set buckets to <button class="linkbtn" data-set-n="1000">1,000</button> and drag again. Then slide liquidity down to <button class="linkbtn" data-set-t="0">cash only</button>.</p>
+  <p class="tryit"><strong>Try this:</strong> on the Percentile Distribution page, set buckets to <button class="linkbtn" data-set-n="5">5</button> and drag the year from 1989 to today: the top bar hardly changes shape.
+    Now set buckets to <button class="linkbtn" data-set-n="1000">1,000</button> and drag again. Then slide liquidity down to <button class="linkbtn" data-set-t="0">cash only</button>. Each page keeps its own sliders.</p>
 </header>
 
-<section class="controls" aria-label="Controls">
-  <div class="control">
-    <label for="n-slider">How many buckets</label>
-    <input id="n-slider" type="range" min="0" max="6" step="1" value="3" list="n-ticks">
-    <datalist id="n-ticks"><option value="0"><option value="1"><option value="2"><option value="3"><option value="4"><option value="5"><option value="6"></datalist>
-    <div class="readout" id="n-readout"></div>
-  </div>
-  <div class="control">
-    <label for="t-slider">What counts as wealth</label>
-    <input id="t-slider" type="range" min="0" max="4" step="1" value="4" list="t-ticks">
-    <datalist id="t-ticks"><option value="0"><option value="1"><option value="2"><option value="3"><option value="4"></datalist>
-    <div class="readout" id="t-readout"></div>
-    <label class="check"><input id="debt-check" type="checkbox" checked> Subtract debts</label>
-  </div>
-  <div class="control">
-    <label for="q-slider">What year it is</label>
-    <div class="row">
-      <input id="q-slider" type="range" min="0" max="146" step="1" value="146">
-      <button id="play" class="btn" type="button" aria-label="Play through time">▶</button>
-    </div>
-    <div class="readout" id="q-readout"></div>
-    <label class="check"><input id="real-check" type="checkbox" checked> Inflation-adjust to <span id="base-quarter"></span> dollars</label>
-  </div>
-</section>
+<section class="controls page" data-page="overview" data-controls aria-label="Controls"></section>
 
 <section class="tiles page" id="tiles" data-page="overview" aria-live="polite"></section>
 
+<section class="controls page" data-page="distribution" data-controls aria-label="Controls"></section>
 <section class="card page" id="distribution" data-page="distribution">
   <div class="card-head">
     <div>
@@ -77,6 +55,7 @@
   <div class="table-wrap" id="dist-table" hidden></div>
 </section>
 
+<section class="controls page" data-page="top-bucket" data-controls aria-label="Controls"></section>
 <section class="card page" id="top-bucket" data-page="top-bucket">
   <div class="card-head">
     <div>
@@ -88,6 +67,7 @@
   <p class="note" id="share-note"></p>
 </section>
 
+<section class="controls page" data-page="composition" data-controls aria-label="Controls"></section>
 <section class="card page" id="composition" data-page="composition">
   <div class="card-head">
     <div>
