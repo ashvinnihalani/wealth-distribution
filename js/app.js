@@ -82,7 +82,9 @@
 
   // ---------- state ----------
   let D = null; // data
-  const state = { n: 3, t: 4, debt: true, q: 146, real: true, y: 'fit99', table: false };
+  const PAGES = ['overview', 'distribution', 'top-bucket', 'composition'];
+  const PAGE_TITLES = { overview: 'Overview', distribution: 'Percentile Distribution', 'top-bucket': 'Top Bucket', composition: 'Composition' };
+  const state = { page: 'overview', n: 3, t: 4, debt: true, q: 146, real: true, y: 'fit99', table: false };
   let playing = null;
 
   // ---------- helpers ----------
@@ -474,14 +476,30 @@
   }
 
   // ---------- orchestration ----------
+  function showPage() {
+    document.querySelectorAll('.page').forEach(el => { el.hidden = el.dataset.page !== state.page; });
+    document.querySelectorAll('.nav a[data-nav]').forEach(a => {
+      if (a.classList.contains('brand')) return;
+      if (a.dataset.nav === state.page) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    document.title = state.page === 'overview' ? 'Wealth Distribution' : `${PAGE_TITLES[state.page]} · Wealth Distribution`;
+  }
   function render() {
+    showPage();
     updateReadouts();
-    const B = buckets(state.q, state.t, state.debt, BUCKET_OPTIONS[state.n]);
-    renderTiles(B);
-    renderDist(B);
-    renderShare();
-    renderMix();
+    if (state.page === 'overview' || state.page === 'distribution') {
+      const B = buckets(state.q, state.t, state.debt, BUCKET_OPTIONS[state.n]);
+      if (state.page === 'overview') renderTiles(B); else renderDist(B);
+    } else if (state.page === 'top-bucket') renderShare();
+    else renderMix();
     writeHash();
+  }
+  function goToPage(page, push) {
+    if (!PAGES.includes(page)) page = 'overview';
+    state.page = page;
+    if (push) history.pushState(null, '', '#' + hashString());
+    window.scrollTo({ top: 0 });
+    setState({});
   }
   function setState(patch) {
     Object.assign(state, patch);
@@ -489,12 +507,17 @@
     $('debt-check').checked = state.debt; $('real-check').checked = state.real; $('y-mode').value = state.y;
     render();
   }
-  function writeHash() {
-    const h = `n=${BUCKET_OPTIONS[state.n]}&t=${state.t}&d=${state.debt ? 1 : 0}&q=${D.quarters[state.q]}&r=${state.real ? 1 : 0}&y=${state.y}`;
-    history.replaceState(null, '', '#' + h);
+  function hashString() {
+    return `${state.page}?n=${BUCKET_OPTIONS[state.n]}&t=${state.t}&d=${state.debt ? 1 : 0}&q=${D.quarters[state.q]}&r=${state.real ? 1 : 0}&y=${state.y}`;
   }
+  function writeHash() { history.replaceState(null, '', '#' + hashString()); }
   function readHash() {
-    const p = new URLSearchParams(location.hash.slice(1));
+    const raw = location.hash.slice(1);
+    const qi = raw.indexOf('?');
+    let page = qi >= 0 ? raw.slice(0, qi) : raw, params = qi >= 0 ? raw.slice(qi + 1) : '';
+    if (page.includes('=')) { params = page; page = 'overview'; } // legacy hash with state only
+    state.page = PAGES.includes(page) ? page : 'overview';
+    const p = new URLSearchParams(params);
     if (p.has('n')) { const i = BUCKET_OPTIONS.indexOf(+p.get('n')); if (i >= 0) state.n = i; }
     if (p.has('t')) state.t = Math.max(0, Math.min(4, +p.get('t') | 0));
     if (p.has('d')) state.debt = p.get('d') === '1';
@@ -528,43 +551,21 @@
       $('table-toggle').setAttribute('aria-pressed', String(state.table));
       render();
     });
-    document.querySelectorAll('[data-set-n]').forEach(b => b.addEventListener('click', () => setState({ n: BUCKET_OPTIONS.indexOf(+b.dataset.setN) })));
-    document.querySelectorAll('[data-set-t]').forEach(b => b.addEventListener('click', () => setState({ t: +b.dataset.setT })));
+    document.querySelectorAll('[data-set-n]').forEach(b => b.addEventListener('click', () => { state.n = BUCKET_OPTIONS.indexOf(+b.dataset.setN); goToPage('distribution', true); }));
+    document.querySelectorAll('[data-set-t]').forEach(b => b.addEventListener('click', () => { state.t = +b.dataset.setT; goToPage('distribution', true); }));
     let raf = null;
     window.addEventListener('resize', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); });
     wireNav();
   }
 
-  // ---------- nav ----------
+  // ---------- nav / routing ----------
   function wireNav() {
-    const links = [...document.querySelectorAll('.nav a[data-nav]')];
-    const sections = ['overview', 'distribution', 'top-bucket', 'composition'].map(id => $(id));
-    const controls = document.querySelector('.controls');
-    const setControlsH = () => {
-      const h = window.innerWidth <= 640 ? 0 : controls.offsetHeight;
-      document.documentElement.style.setProperty('--controls-h', h + 'px');
-    };
-    setControlsH();
-    window.addEventListener('resize', setControlsH);
-    // scroll via JS so the state hash (#n=…&q=…) is left intact
-    links.forEach(a => a.addEventListener('click', ev => {
+    document.querySelectorAll('.nav a[data-nav]').forEach(a => a.addEventListener('click', ev => {
       ev.preventDefault();
-      $(a.dataset.nav).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (a.dataset.nav !== state.page) goToPage(a.dataset.nav, true);
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
     }));
-    const setActive = id => links.forEach(a => {
-      if (a.classList.contains('brand')) return;
-      if (a.dataset.nav === id) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
-    });
-    const update = () => {
-      const line = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) +
-        parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--controls-h')) + 40;
-      let current = sections[0];
-      for (const s of sections) if (s.getBoundingClientRect().top <= line) current = s;
-      if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) current = sections[sections.length - 1];
-      setActive(current.id);
-    };
-    window.addEventListener('scroll', update, { passive: true });
-    update();
+    window.addEventListener('popstate', () => { readHash(); goToPage(state.page, false); });
   }
 
   fetch('data/dfa.json').then(r => r.json()).then(d => {

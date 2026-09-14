@@ -17,7 +17,7 @@
     <li><a href="#composition" data-nav="composition">Composition</a></li>
   </ul>
 </nav>
-<header class="hero" id="overview">
+<header class="hero page" data-page="overview">
   <p class="eyebrow">U.S. household wealth, 1989 – 2026 · Federal Reserve data</p>
   <h1>Wealth Distribution</h1>
   <p class="tagline">The chart looks the same. The top does not.</p>
@@ -55,9 +55,9 @@
   </div>
 </section>
 
-<section class="tiles" id="tiles" aria-live="polite"></section>
+<section class="tiles page" id="tiles" data-page="overview" aria-live="polite"></section>
 
-<section class="card" id="distribution">
+<section class="card page" id="distribution" data-page="distribution">
   <div class="card-head">
     <div>
       <h2 id="dist-title">Line up every household by wealth</h2>
@@ -77,7 +77,7 @@
   <div class="table-wrap" id="dist-table" hidden></div>
 </section>
 
-<section class="card" id="top-bucket">
+<section class="card page" id="top-bucket" data-page="top-bucket">
   <div class="card-head">
     <div>
       <h2>Has the top bucket's slice grown?</h2>
@@ -88,7 +88,7 @@
   <p class="note" id="share-note"></p>
 </section>
 
-<section class="card" id="composition">
+<section class="card page" id="composition" data-page="composition">
   <div class="card-head">
     <div>
       <h2 id="mix-title">What each group's wealth is made of</h2>
@@ -99,7 +99,7 @@
   <div class="chart" id="chart-mix"></div>
 </section>
 
-<section class="prose">
+<section class="prose page" data-page="overview">
   <h2>How this is built</h2>
   <p>Group totals come straight from the Federal Reserve's <a href="https://www.federalreserve.gov/releases/z1/dataviz/dfa/distribute/table/">Distributional Financial Accounts</a>, which report every quarter since 1989 the assets, debts and household counts of five wealth groups: the bottom 50%, the 50th–90th percentiles, the 90th–99th, the 99th–99.9th, and the top 0.1%. Every dollar figure on this page reconciles to those published totals.</p>
   <p><strong>Buckets.</strong> The Fed only publishes five groups, so slicing finer needs an assumption about how wealth is spread <em>inside</em> each group. Below the 99th percentile the shape comes from the Survey of Consumer Finances net-worth percentiles (2022 survey, as tabulated by <a href="https://dqydj.com/net-worth-percentiles/">DQYDJ</a>). Above it, a Pareto curve is used. Splitting the top 0.1% into the top 0.01% and 0.001% uses the <a href="https://wid.world/country/usa/">World Inequality Database</a>'s reported split, held constant over time, so the time trend for those two finest slices is the Fed's top-0.1% trend. This is the same approach as the <em>Inequality in America</em> companion document that inspired the page.</p>
