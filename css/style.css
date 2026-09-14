@@ -81,6 +81,8 @@ p { margin: 0; }
 .page[hidden] { display: none; }
 
 .hero { max-width: 1100px; margin: 0 auto; padding-block: 40px 8px; display: grid; gap: 10px; }
+.subhead { font-size: 1.1rem; color: var(--ink-2); max-width: 70ch; }
+.subhead b { color: var(--ink); font-weight: 650; }
 .eyebrow { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 
 .controls {

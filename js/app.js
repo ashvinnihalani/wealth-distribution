@@ -182,8 +182,7 @@
       if (has.includes('n')) h += pg === 'overview'
         ? `<div class="control">
         <label for="n-select-${pg}">Number of quantiles</label>
-        <select id="n-select-${pg}">${BUCKET_OPTIONS.map((N, i) => `<option value="${i}">${quantileLabel(N)}</option>`).join('')}</select>
-        <div class="readout" id="n-readout-${pg}"></div></div>`
+        <select id="n-select-${pg}">${BUCKET_OPTIONS.map((N, i) => `<option value="${i}">${fmtInt(N)}</option>`).join('')}</select></div>`
         : `<div class="control">
         <label for="n-slider-${pg}">Number of quantiles</label>
         <input id="n-slider-${pg}" type="range" min="0" max="${BUCKET_OPTIONS.length - 1}" step="1" value="4">
@@ -240,9 +239,9 @@
   function updateReadouts() {
     const N = BUCKET_OPTIONS[state.n];
     const hh = totalHouseholds(state.q);
-    if (el('n-readout')) el('n-readout').innerHTML = el('n-slider')
-      ? `<b>${quantileLabel(N)}</b> · ≈${fmtInt(hh / N)} households each`
-      : `≈${fmtInt(hh / N)} households per quantile`;
+    if (el('n-readout')) el('n-readout').innerHTML = `<b>${quantileLabel(N)}</b> · ≈${fmtInt(hh / N)} households each`;
+    if (page === 'overview') $('overview-subhead').innerHTML =
+      `Households are grouped into <b>${fmtInt(N)}</b> quantiles${QUANTILE_NAMES[N] ? ` (${QUANTILE_NAMES[N]})` : ''}, each one representing <b>${fmtPct(1 / N, N >= 1000 ? 3 : 0)}</b> of households, or approximately <b>${fmtInt(hh / N)}</b> households in ${qLabel(state.q)}.`;
     if (el('t-readout')) {
       const tierNames = D.tiers.map(x => x.label);
       const tl = state.t === 0 ? 'Cash & deposits only' : state.t === 4 ? 'Everything: all assets' : 'Cash + ' + tierNames.slice(1, state.t + 1).map(s => s.toLowerCase()).join(' + ');
