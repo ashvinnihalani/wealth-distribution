@@ -1,4 +1,4 @@
-# Wealth Inequality in America — interactive
+# Wealth Distribution
 
 A static site that visualizes U.S. household wealth from the Federal Reserve's
 Distributional Financial Accounts (DFA), 1989 Q3 to the latest quarter.

@@ -65,6 +65,7 @@ p { margin: 0; }
 
 .hero { max-width: 900px; margin: 0 auto; padding-block: 48px 24px; display: grid; gap: 14px; }
 .eyebrow { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.tagline { font-size: 1.35rem; font-weight: 600; letter-spacing: -0.01em; }
 .lede { font-size: 1.1rem; color: var(--ink-2); max-width: 64ch; }
 .tryit { font-size: 0.95rem; color: var(--ink-2); max-width: 70ch; }
 .linkbtn {
