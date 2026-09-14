@@ -175,9 +175,14 @@
       if (!box) continue;
       const has = PAGE_CONTROLS[pg];
       let h = '';
-      if (has.includes('n')) h += `<div class="control">
+      if (has.includes('n')) h += pg === 'overview'
+        ? `<div class="control">
         <label for="n-select-${pg}">Number of buckets</label>
         <select id="n-select-${pg}">${BUCKET_OPTIONS.map((N, i) => `<option value="${i}">${fmtInt(N)} · ${fmtPct(1 / N, N >= 1000 ? 3 : 0)} of households each</option>`).join('')}</select>
+        <div class="readout" id="n-readout-${pg}"></div></div>`
+        : `<div class="control">
+        <label for="n-slider-${pg}">Number of buckets</label>
+        <input id="n-slider-${pg}" type="range" min="0" max="${BUCKET_OPTIONS.length - 1}" step="1" value="4">
         <div class="readout" id="n-readout-${pg}"></div></div>`;
       if (has.includes('t')) h += `<div class="control">
         <label for="t-slider-${pg}">What counts as wealth</label>
@@ -200,6 +205,7 @@
       const st = states[pg];
       const on = (id, ev, fn) => { const x = document.getElementById(`${id}-${pg}`); if (x) x.addEventListener(ev, fn); };
       on('n-select', 'change', e => setPageState(pg, { n: +e.target.value }));
+      on('n-slider', 'input', e => setPageState(pg, { n: +e.target.value }));
       on('t-slider', 'input', e => setPageState(pg, { t: +e.target.value }));
       const pickQuarter = () => {
         const y = document.getElementById(`q-year-${pg}`).value, n = document.getElementById(`q-quarter-${pg}`).value;
@@ -222,7 +228,7 @@
   }
   function syncControls() {
     const set = (name, prop, v) => { const x = el(name); if (x) x[prop] = v; };
-    set('n-select', 'value', state.n); set('t-slider', 'value', state.t);
+    set('n-select', 'value', state.n); set('n-slider', 'value', state.n); set('t-slider', 'value', state.t);
     set('q-year', 'value', D.quarters[state.q].slice(0, 4)); set('q-quarter', 'value', D.quarters[state.q].slice(-1));
     set('debt-check', 'checked', state.debt); set('real-check', 'checked', state.real);
     $('y-mode').value = states.distribution.y;
@@ -230,7 +236,9 @@
   function updateReadouts() {
     const N = BUCKET_OPTIONS[state.n];
     const hh = totalHouseholds(state.q);
-    if (el('n-readout')) el('n-readout').innerHTML = `≈${fmtInt(hh / N)} households per bucket`;
+    if (el('n-readout')) el('n-readout').innerHTML = el('n-slider')
+      ? `<b>${fmtInt(N)}</b> buckets · ${fmtPct(1 / N, N >= 1000 ? 3 : 0)} of households each (≈${fmtInt(hh / N)} households)`
+      : `≈${fmtInt(hh / N)} households per bucket`;
     if (el('t-readout')) {
       const tierNames = D.tiers.map(x => x.label);
       const tl = state.t === 0 ? 'Cash & deposits only' : state.t === 4 ? 'Everything: all assets' : 'Cash + ' + tierNames.slice(1, state.t + 1).map(s => s.toLowerCase()).join(' + ');
