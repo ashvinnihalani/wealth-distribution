@@ -252,21 +252,26 @@
     const q = state.q, t = state.t, debt = state.debt, k = dollars(q);
     const tot = totalValue(q, t, debt);
     const top = B[N - 1];
-    const bottomHalf = rangeValue(q, t, debt, 0, 0.5);
+    const hhPer = totalHouseholds(q) / N;
     const medianAvg = B[Math.floor(N / 2)].avg;
     const shareOK = tot > 0;
     const topShare = shareOK && top.value >= 0 ? top.value / tot : null;
-    const botShare = shareOK ? bottomHalf / tot : null;
     const first = topShareSeries(t, debt, N)[0];
+    const name = bucketName(N);
+    // how far up from the bottom you must go before the combined wealth matches the top bucket
+    let cum = 0, matchP = null;
+    for (let i = 0; i < N - 1; i++) { cum += B[i].value; if (cum >= top.value) { matchP = B[i].b; break; } }
+    const restAvg = (tot - top.value) * 1e6 / (totalHouseholds(q) - hhPer);
     const tiles = [
-      { k: `${bucketName(N)} bucket, per household`, v: fmtMoney(top.avg * k), neg: top.avg < 0,
-        d: medianAvg > 0 ? `${(top.avg / medianAvg).toLocaleString('en-US', { maximumFractionDigits: 0 })}× the median bucket` : 'median bucket is underwater' },
-      { k: `${bucketName(N)} share of the total`, v: topShare == null ? '—' : fmtPct(topShare),
+      { k: `${name}: wealth per household`, v: fmtMoney(top.avg * k), neg: top.avg < 0,
+        d: medianAvg > 0 ? `${(top.avg / medianAvg).toLocaleString('en-US', { maximumFractionDigits: 0 })}× the median household` : 'the median household is underwater' },
+      { k: `${name}: share of all wealth`, v: topShare == null ? '—' : fmtPct(topShare),
         d: topShare == null ? 'undefined: the total is negative' : first != null ? `was ${fmtPct(first)} in 1989 Q3` : '' },
-      { k: 'Bottom half share', v: botShare == null ? '—' : fmtPct(botShare, 2), neg: botShare != null && botShare < 0,
-        d: botShare == null ? 'undefined: the total is negative' : `${fmtMoney(bottomHalf * 1e6 * k)} across ${fmtInt(totalHouseholds(q) / 2)} households` },
-      { k: 'Total pool', v: fmtMoney(tot * 1e6 * k), neg: tot < 0,
-        d: `${state.real ? 'in ' + qLabel(D.quarters.length - 1) + ' dollars' : 'nominal'} · ${fmtMoney(tot * 1e6 * k / totalHouseholds(q))} per household` },
+      { k: `${name}: total holdings`, v: fmtMoney(top.value * 1e6 * k), neg: top.value < 0,
+        d: `across ${fmtInt(hhPer)} households` },
+      { k: `${name}: versus everyone else`, v: top.value <= 0 ? '—' : matchP == null ? 'More than all' : `Bottom ${fmtRank(matchP)}%`,
+        d: top.value <= 0 ? 'the top bucket holds nothing net' : matchP == null ? 'holds more than the other ' + fmtPct(1 - 1 / N, 0) + ' of households combined'
+          : `combined hold the same as this bucket · ${restAvg > 0 ? (top.avg / restAvg).toLocaleString('en-US', { maximumFractionDigits: 0 }) + '× the average of everyone else' : ''}` },
     ];
     $('tiles').innerHTML = tiles.map(x => `<div class="tile"><div class="k">${esc(x.k)}</div><div class="v${x.neg ? ' neg' : ''}">${esc(x.v)}</div><div class="d">${esc(x.d)}</div></div>`).join('');
   }
