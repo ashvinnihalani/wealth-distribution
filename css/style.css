@@ -93,7 +93,8 @@ p { margin: 0; }
 .control { display: grid; gap: 6px; align-content: start; }
 .control > label { font-weight: 600; font-size: 0.9rem; }
 .control .row { display: flex; align-items: center; gap: 8px; }
-.control .row select { flex: 1; min-width: 0; padding: 5px 8px; }
+.control .row select { flex: 1; min-width: 0; }
+.control > select { width: 100%; padding: 5px 8px; }
 .control input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
 .readout { font-size: 0.9rem; color: var(--ink-2); min-height: 1.4em; }
 .readout b { color: var(--ink); font-weight: 650; }

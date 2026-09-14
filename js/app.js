@@ -85,7 +85,7 @@
   const PAGES = ['overview', 'distribution', 'top-bucket', 'composition', 'faq'];
   const PAGE_TITLES = { overview: 'Overview', distribution: 'Percentile Distribution', 'top-bucket': 'Top Bucket', composition: 'Composition', faq: 'FAQ' };
   // each page has its own independent controls and settings
-  const PAGE_CONTROLS = { overview: ['n', 't', 'q'], distribution: ['n', 't', 'q'], 'top-bucket': ['n', 't', 'q'], composition: ['q'], faq: [] };
+  const PAGE_CONTROLS = { overview: ['n', 'q'], distribution: ['n', 't', 'q'], 'top-bucket': ['n', 't', 'q'], composition: ['q'], faq: [] };
   const states = {};
   let page = 'overview';
   let state = null;      // alias for states[page]
@@ -176,8 +176,8 @@
       const has = PAGE_CONTROLS[pg];
       let h = '';
       if (has.includes('n')) h += `<div class="control">
-        <label for="n-slider-${pg}">How many buckets</label>
-        <input id="n-slider-${pg}" type="range" min="0" max="6" step="1" value="3">
+        <label for="n-select-${pg}">Number of buckets</label>
+        <select id="n-select-${pg}">${BUCKET_OPTIONS.map((N, i) => `<option value="${i}">${fmtInt(N)} · ${fmtPct(1 / N, N >= 1000 ? 3 : 0)} of households each</option>`).join('')}</select>
         <div class="readout" id="n-readout-${pg}"></div></div>`;
       if (has.includes('t')) h += `<div class="control">
         <label for="t-slider-${pg}">What counts as wealth</label>
@@ -187,7 +187,7 @@
       if (has.includes('q')) {
         const years = [...new Set(D.quarters.map(q => q.slice(0, 4)))];
         h += `<div class="control">
-        <label for="q-year-${pg}">Financial quarter</label>
+        <label for="q-year-${pg}">Quarter</label>
         <div class="row">
           <select id="q-quarter-${pg}" aria-label="Quarter">${[1, 2, 3, 4].map(n => `<option value="${n}">Q${n}</option>`).join('')}</select>
           <select id="q-year-${pg}" aria-label="Year">${years.map(y => `<option value="${y}">${y}</option>`).join('')}</select>
@@ -199,7 +199,7 @@
       box.innerHTML = h;
       const st = states[pg];
       const on = (id, ev, fn) => { const x = document.getElementById(`${id}-${pg}`); if (x) x.addEventListener(ev, fn); };
-      on('n-slider', 'input', e => setPageState(pg, { n: +e.target.value }));
+      on('n-select', 'change', e => setPageState(pg, { n: +e.target.value }));
       on('t-slider', 'input', e => setPageState(pg, { t: +e.target.value }));
       const pickQuarter = () => {
         const y = document.getElementById(`q-year-${pg}`).value, n = document.getElementById(`q-quarter-${pg}`).value;
@@ -222,7 +222,7 @@
   }
   function syncControls() {
     const set = (name, prop, v) => { const x = el(name); if (x) x[prop] = v; };
-    set('n-slider', 'value', state.n); set('t-slider', 'value', state.t);
+    set('n-select', 'value', state.n); set('t-slider', 'value', state.t);
     set('q-year', 'value', D.quarters[state.q].slice(0, 4)); set('q-quarter', 'value', D.quarters[state.q].slice(-1));
     set('debt-check', 'checked', state.debt); set('real-check', 'checked', state.real);
     $('y-mode').value = states.distribution.y;
@@ -230,7 +230,7 @@
   function updateReadouts() {
     const N = BUCKET_OPTIONS[state.n];
     const hh = totalHouseholds(state.q);
-    if (el('n-readout')) el('n-readout').innerHTML = `<b>${fmtInt(N)}</b> buckets · each is ${fmtPct(1 / N, N >= 1000 ? 3 : 0)} of households (≈${fmtInt(hh / N)} households)`;
+    if (el('n-readout')) el('n-readout').innerHTML = `≈${fmtInt(hh / N)} households per bucket`;
     if (el('t-readout')) {
       const tierNames = D.tiers.map(x => x.label);
       const tl = state.t === 0 ? 'Cash & deposits only' : state.t === 4 ? 'Everything: all assets' : 'Cash + ' + tierNames.slice(1, state.t + 1).map(s => s.toLowerCase()).join(' + ');
