@@ -200,7 +200,7 @@
         <div class="row">
           <select id="q-quarter-${pg}" aria-label="Quarter">${[1, 2, 3, 4].map(n => `<option value="${n}">Q${n}</option>`).join('')}</select>
           <select id="q-year-${pg}" aria-label="Year">${years.map(y => `<option value="${y}">${y}</option>`).join('')}</select>
-          <button id="play-${pg}" class="btn" type="button" aria-label="Play through time">▶</button>
+          ${pg === 'overview' ? '' : `<button id="play-${pg}" class="btn" type="button" aria-label="Play through time">▶</button>`}
         </div>
         <div class="readout" id="q-readout-${pg}"></div>
         <label class="check"><input id="real-check-${pg}" type="checkbox" checked> Inflation-adjust to ${base} dollars</label></div>`;
