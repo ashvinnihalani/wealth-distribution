@@ -82,7 +82,7 @@
   // ---------- state ----------
   let D = null; // data
   const PAGES = ['overview', 'distribution', 'top-bucket', 'composition', 'faq'];
-  const PAGE_TITLES = { overview: 'Overview', distribution: 'Percentile Distribution', 'top-bucket': 'Top Bucket', composition: 'Composition', faq: 'FAQ' };
+  const PAGE_TITLES = { overview: 'Overview', distribution: 'Percentile Distribution', 'top-bucket': 'Top Quantile', composition: 'Composition', faq: 'FAQ' };
   // each page has its own independent controls and settings
   const PAGE_CONTROLS = { overview: ['n', 'q'], distribution: ['n', 't', 'q'], 'top-bucket': ['n', 't', 'q'], composition: ['q'], faq: [] };
   const states = {};
@@ -115,6 +115,11 @@
     const w = 1 / N;
     if (N <= 100) return `Top ${fmtRank(w)}%`;
     return `Top ${(w * 100).toLocaleString('en-US', { maximumFractionDigits: 3 })}%`;
+  }
+  const QUANTILE_NAMES = { 5: 'quintiles', 10: 'deciles', 20: 'ventiles', 100: 'percentiles' };
+  function quantileLabel(N) { // "5 · quintiles (20% each)" / "1,000 · 0.1% each"
+    const each = fmtPct(1 / N, N >= 1000 ? 3 : 0) + ' each';
+    return QUANTILE_NAMES[N] ? `${fmtInt(N)} · ${QUANTILE_NAMES[N]} (${each})` : `${fmtInt(N)} · ${each}`;
   }
   function dollars(q) { return state.real ? D.cpi[D.quarters.length - 1] / D.cpi[q] : 1; }
 
@@ -176,11 +181,11 @@
       let h = '';
       if (has.includes('n')) h += pg === 'overview'
         ? `<div class="control">
-        <label for="n-select-${pg}">Number of buckets</label>
-        <select id="n-select-${pg}">${BUCKET_OPTIONS.map((N, i) => `<option value="${i}">${fmtInt(N)} · ${fmtPct(1 / N, N >= 1000 ? 3 : 0)} of households each</option>`).join('')}</select>
+        <label for="n-select-${pg}">Number of quantiles</label>
+        <select id="n-select-${pg}">${BUCKET_OPTIONS.map((N, i) => `<option value="${i}">${quantileLabel(N)}</option>`).join('')}</select>
         <div class="readout" id="n-readout-${pg}"></div></div>`
         : `<div class="control">
-        <label for="n-slider-${pg}">Number of buckets</label>
+        <label for="n-slider-${pg}">Number of quantiles</label>
         <input id="n-slider-${pg}" type="range" min="0" max="${BUCKET_OPTIONS.length - 1}" step="1" value="4">
         <div class="readout" id="n-readout-${pg}"></div></div>`;
       if (has.includes('t')) h += `<div class="control">
@@ -236,8 +241,8 @@
     const N = BUCKET_OPTIONS[state.n];
     const hh = totalHouseholds(state.q);
     if (el('n-readout')) el('n-readout').innerHTML = el('n-slider')
-      ? `<b>${fmtInt(N)}</b> buckets · ${fmtPct(1 / N, N >= 1000 ? 3 : 0)} of households each (≈${fmtInt(hh / N)} households)`
-      : `≈${fmtInt(hh / N)} households per bucket`;
+      ? `<b>${quantileLabel(N)}</b> · ≈${fmtInt(hh / N)} households each`
+      : `≈${fmtInt(hh / N)} households per quantile`;
     if (el('t-readout')) {
       const tierNames = D.tiers.map(x => x.label);
       const tl = state.t === 0 ? 'Cash & deposits only' : state.t === 4 ? 'Everything: all assets' : 'Cash + ' + tierNames.slice(1, state.t + 1).map(s => s.toLowerCase()).join(' + ');
@@ -270,8 +275,8 @@
       { k: `${name}: total holdings`, v: fmtMoney(top.value * 1e6 * k), neg: top.value < 0,
         d: `across ${fmtInt(hhPer)} households` },
       { k: `${name}: versus everyone else`, v: top.value <= 0 ? '—' : matchP == null ? 'More than all' : `Bottom ${fmtRank(matchP)}%`,
-        d: top.value <= 0 ? 'the top bucket holds nothing net' : matchP == null ? 'holds more than the other ' + fmtPct(1 - 1 / N, 0) + ' of households combined'
-          : `combined hold the same as this bucket · ${restAvg > 0 ? (top.avg / restAvg).toLocaleString('en-US', { maximumFractionDigits: 0 }) + '× the average of everyone else' : ''}` },
+        d: top.value <= 0 ? 'the top quantile holds nothing net' : matchP == null ? 'holds more than the other ' + fmtPct(1 - 1 / N, 0) + ' of households combined'
+          : `combined hold the same as this quantile · ${restAvg > 0 ? (top.avg / restAvg).toLocaleString('en-US', { maximumFractionDigits: 0 }) + '× the average of everyone else' : ''}` },
     ];
     $('tiles').innerHTML = tiles.map(x => `<div class="tile"><div class="k">${esc(x.k)}</div><div class="v${x.neg ? ' neg' : ''}">${esc(x.v)}</div><div class="d">${esc(x.d)}</div></div>`).join('');
   }
@@ -337,7 +342,7 @@
     const y0 = yOf(0);
     const xOf = p => m.l + p * pw;
 
-    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Average wealth per household by rank bucket">`;
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Average wealth per household by quantile">`;
     // grid + y ticks
     for (const tv of ticks) {
       const y = yOf(tv);
@@ -349,7 +354,7 @@
       const x = xOf(p / 100);
       s += `<text class="tick" x="${x}" y="${H - m.b + 18}" text-anchor="middle">${p}%</text>`;
     }
-    s += `<text class="tick" x="${m.l + pw / 2}" y="${H - 6}" text-anchor="middle">households ranked by wealth, poorest → richest (${fmtInt(N)} buckets)</text>`;
+    s += `<text class="tick" x="${m.l + pw / 2}" y="${H - 6}" text-anchor="middle">households ranked by wealth, poorest → richest (${fmtInt(N)} quantiles)</text>`;
 
     // marks
     const gap = 2;
@@ -415,9 +420,9 @@
     hit.addEventListener('mousemove', onMove);
     hit.addEventListener('mouseleave', hideTip);
 
-    $('dist-sub').textContent = `Average ${state.debt ? 'net ' : ''}${state.t === 4 ? 'wealth' : 'holdings'} per household in each of ${fmtInt(N)} equal buckets, ${qLabel(state.q)}` +
+    $('dist-sub').textContent = `Average ${state.debt ? 'net ' : ''}${state.t === 4 ? 'wealth' : 'holdings'} per household in each of ${fmtInt(N)} quantiles, ${qLabel(state.q)}` +
       (state.real ? `, in ${qLabel(D.quarters.length - 1)} dollars.` : ', nominal dollars.') +
-      (clipAt != null ? ' The richest bucket does not fit; its bar is clipped.' : '');
+      (clipAt != null ? ' The richest quantile does not fit; its bar is clipped.' : '');
     renderTable(B, k, tot, hhPer);
   }
 
@@ -462,7 +467,7 @@
     const lo = Math.min(60, ...all), hi = Math.max(140, ...all);
     const yOf = v => m.t + ph - (v - lo) / (hi - lo) * ph;
     const xOf = q => m.l + q / (Q - 1) * pw;
-    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Top bucket's share of wealth over time, indexed">`;
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Top quantile's share of wealth over time, indexed">`;
     for (const tv of niceTicks(lo, hi, 5)) {
       const y = yOf(tv);
       s += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${y}" y2="${y}"/><text class="tick" x="${m.l - 8}" y="${y + 4}" text-anchor="end">${tv}</text>`;
@@ -504,8 +509,8 @@
 
     const hs = series.find(x => x.ni === hiIdx);
     const now = hs.raw[state.q], first = hs.raw[0];
-    $('share-note').textContent = `${hs.name}${state.n > 4 ? ' (and the finer buckets, which follow it by construction)' : ''}: ${fmtPct(first)} of the total in 1989 Q3 → ${fmtPct(now)} in ${qLabel(state.q)}.` +
-        (state.n >= 4 ? ' Buckets finer than 0.1% use a fixed split of the Fed\'s top-0.1% total, so their trend is the top 0.1%\'s trend.' : '') +
+    $('share-note').textContent = `${hs.name}${state.n > 4 ? ' (and the finer quantiles, which follow it by construction)' : ''}: ${fmtPct(first)} of the total in 1989 Q3 → ${fmtPct(now)} in ${qLabel(state.q)}.` +
+        (state.n >= 4 ? ' Quantiles finer than 0.1% use a fixed split of the Fed\'s top-0.1% total, so their trend is the top 0.1%\'s trend.' : '') +
         (series.length < allSeries.length ? ' Lines whose share is undefined in some quarter are omitted.' : '');
   }
 

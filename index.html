@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wealth Distribution</title>
-<meta name="description" content="Interactive view of U.S. household wealth from the Federal Reserve's Distributional Financial Accounts. Change how many buckets you split the country into, what counts as wealth (cash vs. assets), and the year.">
+<meta name="description" content="Interactive view of U.S. household wealth from the Federal Reserve's Distributional Financial Accounts. Change how many quantiles you split the country into, what counts as wealth (cash vs. assets), and the year.">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
   <ul>
     <li><a href="#overview" data-nav="overview">Overview</a></li>
     <li><a href="#distribution" data-nav="distribution">Percentile Distribution</a></li>
-    <li><a href="#top-bucket" data-nav="top-bucket">Top Bucket</a></li>
+    <li><a href="#top-bucket" data-nav="top-bucket">Top Quantile</a></li>
     <li><a href="#composition" data-nav="composition">Composition</a></li>
     <li><a href="#faq" data-nav="faq">FAQ</a></li>
   </ul>
@@ -39,7 +39,7 @@
       <label for="y-mode" class="small">Vertical scale</label>
       <select id="y-mode">
         <option value="fit99">Fit the bottom 99% (top clipped)</option>
-        <option value="all">Fit every bucket</option>
+        <option value="all">Fit every quantile</option>
         <option value="log">Log scale</option>
       </select>
       <button class="btn small" id="table-toggle" type="button" aria-expanded="false" aria-controls="dist-table">Table</button>
@@ -53,8 +53,8 @@
 <section class="card page" id="top-bucket" data-page="top-bucket">
   <div class="card-head">
     <div>
-      <h2>Has the top bucket's slice grown?</h2>
-      <p class="sub">Share of all wealth held by the richest bucket, indexed to 1989 Q3 = 100. The line for your bucket count is highlighted; click anywhere to jump to that quarter.</p>
+      <h2>Has the top quantile's slice grown?</h2>
+      <p class="sub">Share of all wealth held by the richest quantile, indexed to 1989 Q3 = 100. The line for your quantile count is highlighted; click anywhere to jump to that quarter.</p>
     </div>
   </div>
   <div class="chart" id="chart-share"></div>
@@ -75,9 +75,11 @@
 
 <section class="prose page" data-page="faq">
   <h2>FAQ</h2>
+  <h3>What is a quantile?</h3>
+  <p>A quantile is one of N equal-sized groups you get by ranking every household by wealth and cutting the line into N pieces. Five quantiles are quintiles, ten are deciles, a hundred are percentiles. The site goes as fine as 100,000, where the top quantile is the richest 0.001% of households.</p>
   <h3>Where does the data come from?</h3>
   <p>Group totals come straight from the Federal Reserve's <a href="https://www.federalreserve.gov/releases/z1/dataviz/dfa/distribute/table/">Distributional Financial Accounts</a>, which report every quarter since 1989 the assets, debts and household counts of five wealth groups: the bottom 50%, the 50th–90th percentiles, the 90th–99th, the 99th–99.9th, and the top 0.1%. Every dollar figure on this site reconciles to those published totals.</p>
-  <h3>The Fed only publishes five groups. How can the site show 100,000 buckets?</h3>
+  <h3>The Fed only publishes five groups. How can the site show 100,000 quantiles?</h3>
   <p>Slicing finer needs an assumption about how wealth is spread <em>inside</em> each group. Below the 99th percentile the shape comes from the Survey of Consumer Finances net-worth percentiles (2022 survey, as tabulated by <a href="https://dqydj.com/net-worth-percentiles/">DQYDJ</a>). Above it, a Pareto curve is used. Splitting the top 0.1% into the top 0.01% and 0.001% uses the <a href="https://wid.world/country/usa/">World Inequality Database</a>'s reported split, held constant over time, so the time trend for those two finest slices is the Fed's top-0.1% trend. This is the same approach as the <em>Inequality in America</em> companion document that inspired the site.</p>
   <h3>What does the "what counts as wealth" slider do?</h3>
   <p>It adds asset classes in order of how quickly they turn into spendable cash: deposits and money-market funds; then stocks, mutual funds and bonds; then retirement accounts, pensions, life insurance and annuities; then private business equity and other assets; then homes and consumer durables. "Subtract debts" takes off mortgages, consumer credit and other liabilities.</p>
@@ -88,7 +90,7 @@
   <h3>Are the dollars inflation-adjusted?</h3>
   <p>The Fed's data is nominal. The inflation toggle uses CPI-U (FRED series CPIAUCSL) to restate every quarter in the latest quarter's dollars. Averages are per household.</p>
   <h3>Why do the sliders differ between pages?</h3>
-  <p>Each page keeps its own settings, so you can compare, say, 5 buckets in 1989 on one page with 1,000 buckets today on another. The Composition page only needs a year, because it always shows every asset tier.</p>
+  <p>Each page keeps its own settings, so you can compare, say, quintiles in 1989 on one page with 1,000 quantiles today on another. The Composition page only needs a year, because it always shows every asset tier.</p>
   <p class="small">Data: Federal Reserve Board Z.1 DFA release; FRED CPIAUCSL; Survey of Consumer Finances via DQYDJ; World Inequality Database. Inspired by Politizane's <em>Wealth Inequality in America</em> (2012) and the 2026 companion document. Source on <a href="https://github.com/ashvinnihalani/wealth-distribution">GitHub</a>.</p>
 </section>
 

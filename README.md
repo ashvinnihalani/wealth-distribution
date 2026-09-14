@@ -5,7 +5,7 @@ Distributional Financial Accounts (DFA), 1989 Q3 to the latest quarter.
 
 Three controls drive every chart:
 
-1. **How many buckets** — 5, 10, 20, 100, 1,000, 10,000 or 100,000 equal slices of
+1. **Number of quantiles** — 5, 10, 20, 100, 1,000, 10,000 or 100,000 equal slices of
    households. Coarse slices look almost unchanged since 1989; fine slices show the
    very top pulling away.
 2. **What counts as wealth** — a liquidity slider from cash & deposits only, through
