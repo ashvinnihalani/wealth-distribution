@@ -184,18 +184,36 @@
         <input id="t-slider-${pg}" type="range" min="0" max="4" step="1" value="4">
         <div class="readout" id="t-readout-${pg}"></div>
         <label class="check"><input id="debt-check-${pg}" type="checkbox" checked> Subtract debts</label></div>`;
-      if (has.includes('q')) h += `<div class="control">
-        <label for="q-slider-${pg}">${pg === 'top-bucket' ? 'Highlight a year' : 'What year it is'}</label>
-        <div class="row"><input id="q-slider-${pg}" type="range" min="0" max="${last}" step="1" value="${last}">
-        <button id="play-${pg}" class="btn" type="button" aria-label="Play through time">▶</button></div>
+      if (has.includes('q')) {
+        const years = [...new Set(D.quarters.map(q => q.slice(0, 4)))];
+        h += `<div class="control">
+        <label for="q-year-${pg}">Financial quarter</label>
+        <div class="row">
+          <select id="q-quarter-${pg}" aria-label="Quarter">${[1, 2, 3, 4].map(n => `<option value="${n}">Q${n}</option>`).join('')}</select>
+          <select id="q-year-${pg}" aria-label="Year">${years.map(y => `<option value="${y}">${y}</option>`).join('')}</select>
+          <button id="play-${pg}" class="btn" type="button" aria-label="Play through time">▶</button>
+        </div>
         <div class="readout" id="q-readout-${pg}"></div>
         <label class="check"><input id="real-check-${pg}" type="checkbox" checked> Inflation-adjust to ${base} dollars</label></div>`;
+      }
       box.innerHTML = h;
       const st = states[pg];
       const on = (id, ev, fn) => { const x = document.getElementById(`${id}-${pg}`); if (x) x.addEventListener(ev, fn); };
       on('n-slider', 'input', e => setPageState(pg, { n: +e.target.value }));
       on('t-slider', 'input', e => setPageState(pg, { t: +e.target.value }));
-      on('q-slider', 'input', e => setPageState(pg, { q: +e.target.value }));
+      const pickQuarter = () => {
+        const y = document.getElementById(`q-year-${pg}`).value, n = document.getElementById(`q-quarter-${pg}`).value;
+        let i = D.quarters.indexOf(`${y}:Q${n}`);
+        if (i < 0) { // combination outside the data: snap to the nearest real quarter
+          const want = +y * 4 + (+n - 1);
+          let best = 0, bd = Infinity;
+          D.quarters.forEach((q, k) => { const d = Math.abs(+q.slice(0, 4) * 4 + (+q.slice(-1) - 1) - want); if (d < bd) { bd = d; best = k; } });
+          i = best;
+        }
+        setPageState(pg, { q: i });
+      };
+      on('q-year', 'change', pickQuarter);
+      on('q-quarter', 'change', pickQuarter);
       on('debt-check', 'change', e => setPageState(pg, { debt: e.target.checked }));
       on('real-check', 'change', e => setPageState(pg, { real: e.target.checked }));
       on('play', 'click', () => togglePlay(pg));
@@ -204,7 +222,8 @@
   }
   function syncControls() {
     const set = (name, prop, v) => { const x = el(name); if (x) x[prop] = v; };
-    set('n-slider', 'value', state.n); set('t-slider', 'value', state.t); set('q-slider', 'value', state.q);
+    set('n-slider', 'value', state.n); set('t-slider', 'value', state.t);
+    set('q-year', 'value', D.quarters[state.q].slice(0, 4)); set('q-quarter', 'value', D.quarters[state.q].slice(-1));
     set('debt-check', 'checked', state.debt); set('real-check', 'checked', state.real);
     $('y-mode').value = states.distribution.y;
   }
@@ -217,7 +236,7 @@
       const tl = state.t === 0 ? 'Cash & deposits only' : state.t === 4 ? 'Everything: all assets' : 'Cash + ' + tierNames.slice(1, state.t + 1).map(s => s.toLowerCase()).join(' + ');
       el('t-readout').innerHTML = `<b>${esc(tl)}</b>${state.debt ? ' minus debts' : ''}`;
     }
-    if (el('q-readout')) el('q-readout').innerHTML = `<b>${qLabel(state.q)}</b> · ${fmtInt(hh)} households`;
+    if (el('q-readout')) el('q-readout').innerHTML = `${fmtInt(hh)} households`;
   }
 
   // ---------- tiles ----------
